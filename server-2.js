@@ -119,7 +119,10 @@ const chooseOption = (type) => {
       addEmployee();
       break;
     }
-   
+    case 'Add Role': {
+    addRole();
+    break;
+    }
   }
 };
 
@@ -131,7 +134,8 @@ const init = () => {
       'View All Employees',
       'View All Departments',
       'View All Roles',
-      'Add Employee'
+      'Add Employee',
+      'Add Role'
     ],
     name: 'type',
   })
