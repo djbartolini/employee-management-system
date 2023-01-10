@@ -18,3 +18,30 @@ CREATE TABLE employee (
     role_id INT,
     manager_id INT
 );
+
+-- Engineering --
+    -- Engineering Manager --
+        -- Mickie Mouse --
+    -- Senior Engineer --
+        -- Minnie Mouse --
+    -- Junior Engineer --
+        -- Pluto --
+-- Finance --
+    -- CFO --
+        -- Goofy --
+    -- Senior Accountant --
+        -- Donald Duck --
+    -- Accountant --
+        -- Daisy Duck --
+-- Marketing --
+    -- Marketing Manager --
+        -- Huey --
+    -- Marketing Analyst --
+        -- Dewey --
+    -- Marketing Agent --
+        -- Louie --
+-- Sales --
+    -- Sales Manager --
+        -- Timon --
+    -- Salesperson --
+        -- Pumbaa --

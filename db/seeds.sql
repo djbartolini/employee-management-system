@@ -20,14 +20,14 @@ INSERT INTO role (title, salary, department_id)
     ('Salesperson', 75000, 4);
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
     VALUES
-    ('Mickie', 'Mouse', 1, null),
+    ('Mickie', 'Mouse', 1, 1),
     ('Minnie', 'Mouse', 2, 1),
     ('Pluto', '', 3, 1),
-    ('Goofy', '', 4, null),
+    ('Goofy', '', 4, 4),
     ('Donald', 'Duck', 5, 4),
     ('Daisy', 'Duck', 6, 4),
-    ('Huey', 'Duck', 7, null),
+    ('Huey', 'Duck', 7, 7),
     ('Dewey', 'Duck', 8, 7),
     ('Louie', 'Duck', 9, 7),
-    ('Timon', '', 10, null),
+    ('Timon', '', 10, 10),
     ('Pumbaa', '', 11, 10);
