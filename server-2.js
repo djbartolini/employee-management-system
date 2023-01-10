@@ -43,27 +43,48 @@ const selectAllValue = (table, name, value) => {
 
 const selectAllEmployeeDetails = async () => {
   const statement = `
-SELECT
-  employee.id,
-  employee.first_name,
-  employee.last_name,
-  role.title,
-  role.salary,
-  CONCAT(
-    manager.first_name,
-    ' ',
-    manager.last_name
-  ) AS manager
-FROM employee
-JOIN role
-ON employee.role_id = role.id
-JOIN employee AS manager
-ON employee.manager_id = manager.id
-  `
+    SELECT
+    employee.id,
+    employee.first_name,
+    employee.last_name,
+    role.title,
+    role.salary,
+    CONCAT(
+        manager.first_name,
+        ' ',
+        manager.last_name
+    ) AS manager
+    FROM employee
+    JOIN role
+    ON employee.role_id = role.id
+    JOIN employee AS manager
+    ON employee.manager_id = manager.id
+    `
     const [employees] = await db.promise().query(statement);
     console.table(employees);
     init();
 };
+
+const selectEmployeeByManager = async () => {
+    const statement = `
+    SELECT
+    CONCAT(
+        manager.first_name,
+        " ",
+        manager.last_name
+    ) AS manager,
+    COUNT(
+        employee.id
+    ) AS employees_managed
+    FROM employee
+    JOIN employee AS manager
+    ON employee.manager_id = manager.id
+    GROUP BY manager
+    `
+    const [employees] = await db.promise().query(statement);
+    console.table(employees);
+    init();
+}
 
 // 
 const addRole = async () => {
@@ -194,6 +215,10 @@ const chooseOption = (type) => {
         updateManager();
         break;
     }
+    case 'View Employees by Manager': {
+        selectEmployeeByManager();
+        break;
+    }
   }
 };
 
@@ -208,7 +233,8 @@ const init = () => {
       'Add Employee',
       'Add Role',
       'Update Employee Role',
-      'Update Employee Manager'
+      'Update Employee Manager',
+      'View Employees by Manager'
     ],
     name: 'type',
   })
