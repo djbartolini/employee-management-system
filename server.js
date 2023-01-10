@@ -4,196 +4,220 @@ const mysql = require('mysql2');
 require('console.table');
 
 const db = mysql.createConnection({
-    user: 'root',
-    database: 'employee_db'
+  user: "root",
+  database: "employee_db",
 });
 
-const promptDepartmentInfo = () => {
+const selectAll = async (table, display) => {
+  const results = await db.promise().query('SELECT * FROM ' + table);
+  if (display) {
+    console.table(results[0]);
+    return init();
+  }
+  return results;
+};
+
+const insert = (table, data) => {
+  db.query('INSERT INTO ?? SET ?', [table, data], (err) => {
+    if (err) return console.error(err);
+    console.log('\nSuccesfully created!\n');
+    init();
+  });
+};
+
+const update = (table, roleId, employeeId) => {
+    db.query('UPDATE ?? SET ? WHERE employee.id = ?', [table, roleId, employeeId], (err) => {
+        if (err) return console.error(err);
+        console.log('\nSuccesfully updated!\n')
+        init();
+    });
+}
+
+const selectAllNameAndValue = (table, firstName, lastName, value) => {
+  return db.promise().query('SELECT CONCAT(??, " ", ??) AS name, ?? AS value FROM ??', [firstName, lastName, value, table]);
+};
+
+const selectAllValue = (table, name, value) => {
+  return db.promise().query('SELECT ?? AS name, ?? AS value FROM ??', [name, value, table]);
+}
+
+const selectAllEmployeeDetails = async () => {
+  const statement = `
+    SELECT
+    employee.id,
+    employee.first_name,
+    employee.last_name,
+    role.title,
+    role.salary,
+    CONCAT(
+        manager.first_name,
+        ' ',
+        manager.last_name
+    ) AS manager
+    FROM employee
+    JOIN role
+    ON employee.role_id = role.id
+    JOIN employee AS manager
+    ON employee.manager_id = manager.id
+    `
+    const [employees] = await db.promise().query(statement);
+    console.table(employees);
+    init();
+};
+
+const addRole = async () => {
+    const [departments] = await selectAllValue('department', 'name', 'id');
     prompt([
         {
-            type: 'input',
-            message: 'What is the department\'s name?',
-            validate: function(input) {
-                if (input.length > 0 && input.length < 31) 
-                    return true;
-            },
-            name: 'departmentName'
+            name: 'title',
+            message: 'What is the name of the role?'
+        },
+        {
+            name: 'salary',
+            message: 'What is the salary for this role?'
+        },
+        {
+            type: 'rawlist',
+            name: 'department_id',
+            message: 'What department does this role belong to?',
+            choices: departments
         }
     ])
     .then((answers) => {
-        db.query(`INSERT INTO department (name)
-            VALUES ('${answers.departmentName}')`, (err, departments) => {
-                console.table(departments);
-                init();
-            })
+        insert('role', answers);
     })
 }
 
-const promptRoleInfo = () => {
-    db.query('SELECT * FROM department;', (err, departments) => {
-        let departmentsArr = [];
-        for (let department of departments) {
-            departmentsArr.push(department.name);
+const addEmployee = async () => {
+  const [roles] = await selectAllValue('role', 'title', 'id');
+  const [managers] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
+  prompt([
+    {
+      name: 'first_name',
+      message: 'Enter the employee\'s first name.',
+    },
+    {
+      name: 'last_name',
+      message: 'Enter the employee\'s last name.',
+    },
+    {
+      type: 'rawlist',
+      name: 'role_id',
+      message: 'Choose a role for this employee.',
+      choices: roles,
+    },
+    {
+      type: 'rawlist',
+      name: 'manager_id',
+      message: 'Choose a manager for this employee.',
+      choices: managers,
+    }
+  ])
+  .then((answers) => {
+    insert('employee', answers);
+  });
+};
+const updateRole = async () => {
+    const [roles] = await selectAllValue('role', 'title', 'id');
+    const [employees] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
+    prompt([
+        {
+            type: 'rawlist',
+            name: 'id',
+            message: 'Which employee\'s role are you updating?',
+            choices: employees
+        },
+        {
+            type: 'rawlist',
+            name: 'role_id',
+            message: 'What is this employee\'s new role?',
+            choices: roles
         }
-        prompt([
-            {
-                type: 'input',
-                message: 'What is the role\'s title?',
-                validate: function(input) {
-                    if (input.length > 0 && input.length < 31) 
-                        return true;
-                },
-                name: 'roleTitle'
-            },
-            {
-                type: 'input',
-                message: 'What is this role\'s salary?',
-                // validate: function(input) {
-                //     if (input.typeOf === 'number') 
-                //         return true;
-                // },
-                name: 'roleSalary'
-            },
-            {
-                type: 'list',
-                message: 'What department does this role belong to?',
-                choices: departmentsArr,
-                name: 'roleDepartment'
-            }
-        ])
-        .then((answers) => {
-            db.query(`INSERT INTO role (title, salary, department_id)
-            VALUES ('${answers.roleTitle}',
-                ${answers.roleSalary},
-                ${departmentsArr.indexOf(answers.roleDepartment) + 1}
-                );`, (err, roles) => {
-                    console.table(roles);
-                    init();
-                });
-        })
+    ])
+    .then((answers) => {
+        const roleId = {role_id: answers.role_id};
+        update('employee', roleId, answers.id);
     })
 }
 
-const promptEmployeeInfo = () => {
-    db.query(`SELECT * FROM role;`, (err, roles) => {
-        let rolesArr = [];
-        for (let role of roles) {
-            rolesArr.push(role.name);
+const updateManager = async () => {
+    const [managers] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
+    const [employees] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
+    prompt([
+        {
+            type: 'rawlist',
+            name: 'id',
+            message: 'Which employee\'s role are you updating?',
+            choices: employees
+        },
+        {
+            type: 'rawlist',
+            name: 'manager_id',
+            message: 'Who is this employee\'s new manager?',
+            choices: managers
         }
-        db.query('SELECT * FROM employee', (err, employees) => {
-            let managersArr = [];
-            for (let employee of employees) {
-                if (employees.manager_id === null) {
-                    managersArr.push(employee.first_name + ' ' + employee.last_name);
-                }
-            }
-            prompt([
-                {
-                    type: 'input',
-                    message: 'What is the employee\'s FIRST name?',
-                    validate: function(input) {
-                        if (input.length > 0 && input.length < 31) 
-                            return true;
-                    },
-                    name: 'employeeFirstName'
-                },
-                {
-                    type: 'input',
-                    message: 'What is the employee\'s LAST name?',
-                    validate: function(input) {
-                        if (input.length > 0 && input.length < 31) 
-                            return true;
-                    },
-                    name: 'employeeLastName'
-                },
-                {
-                    type: 'input',
-                    message: 'What is this employee\'s role?',
-                    // validate: function(input) {
-                    //     if (input.typeOf === 'number') 
-                    //         return true;
-                    // },
-                    name: 'employeeRole'
-                },
-                {
-                    type: 'list',
-                    message: 'What department employee does this role belong to?',
-                    choices: rolesArr,
-                    name: 'employeeRole'
-                },
-                {
-                    type: 'list',
-                    message: 'Who is the manager for this employee?',
-                    choices: managersArr,
-                    name: 'employeeManager'
-                }
-            ])
-            .then((answers) => {
-                db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
-                VALUES ('${answers.employeeFirstName}',
-                    ${answers.employeeLastName},
-                    ${rolesArr.indexOf(answers.employeeRole) + 1},
-                    ${managersId.indexOf()}
-                    );`, (err, roles) => {
-                        console.table(roles);
-                        init();
-                    });
-        })
-        })
+    ])
+    .then((answers) => {
+        const managerId = {manager_id: answers.manager_id};
+        update('employee', managerId, answers.id);
     })
 }
 
 const chooseOption = (type) => {
-    switch(type) {
-        case 'VIEW ALL EMPLOYEES': {
-            db.query('SELECT * FROM employee', (err, employees) => {
-                console.table(employees);
-                init();
-            });
-            break;
-        }
-        case 'VIEW ALL DEPARTMENTS': {
-            db.query('SELECT * FROM department', (err, departments) => {
-                console.table(departments);
-                init();
-            });
-            break;
-        }
-        case 'VIEW ALL ROLES': {
-            db.query('SELECT * FROM role', (err, roles) => {
-                console.table(roles);
-                init();
-            });
-            break;
-        }
-        case 'ADD A DEPARTMENT': {
-            promptDepartmentInfo();
-            break;
-        }
-        case 'ADD A ROLE': {
-            promptRoleInfo();
-            break;
-        }
+  switch (type) {
+    case 'View All Employees': {
+      selectAllEmployeeDetails();
+      break;
     }
-}
-
-const init = () => {
-    prompt({
-        type: 'rawlist',
-        message: 'Choose one:',
-        choices: [
-            'VIEW ALL EMPLOYEES',
-            'VIEW ALL DEPARTMENTS',
-            'VIEW ALL ROLES',
-            'ADD A DEPARTMENT',
-            'ADD A ROLE'
-        ],
-        name: 'type'
-    })
-    .then((answers) => {
-        chooseOption(answers.type);
-    })
+    case 'View All Departments': {
+      selectAll('department', true);
+      break;
+    }
+    case 'View All Roles': {
+      selectAll('role', true);
+      break;
+    }
+    case 'Add Employee': {
+      addEmployee();
+      break;
+    }
+    case 'Add Role': {
+        addRole();
+        break;
+    }
+    case 'Update Employee Role': {
+        updateRole();
+        break;
+    }
+    case 'Update Employee Manager': {
+        updateManager();
+        break;
+    }
+    case 'Done': {
+        process.exit();
+    }
+  }
 };
 
-// getDepartments();
+const init = () => {
+  prompt({
+    type: 'rawlist',
+    message: 'Choose one of the following:',
+    choices: [
+      'View All Employees',
+      'View All Departments',
+      'View All Roles',
+      'Add Employee',
+      'Add Role',
+      'Update Employee Role',
+      'Update Employee Manager',
+      'Done'
+    ],
+    name: 'type',
+  })
+    .then((answers) => {
+      chooseOption(answers.type);
+    });
+};
+
 init();
