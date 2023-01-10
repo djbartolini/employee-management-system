@@ -65,28 +65,6 @@ const selectAllEmployeeDetails = async () => {
     init();
 };
 
-const selectEmployeeByManager = async () => {
-    const statement = `
-    SELECT
-    CONCAT(
-        manager.first_name,
-        " ",
-        manager.last_name
-    ) AS manager,
-    COUNT(
-        employee.id
-    ) AS employees_managed
-    FROM employee
-    JOIN employee AS manager
-    ON employee.manager_id = manager.id
-    GROUP BY manager
-    `
-    const [employees] = await db.promise().query(statement);
-    console.table(employees);
-    init();
-}
-
-// 
 const addRole = async () => {
     const [departments] = await selectAllValue('department', 'name', 'id');
     prompt([
@@ -215,10 +193,6 @@ const chooseOption = (type) => {
         updateManager();
         break;
     }
-    case 'View Employees by Manager': {
-        selectEmployeeByManager();
-        break;
-    }
   }
 };
 
@@ -233,8 +207,7 @@ const init = () => {
       'Add Employee',
       'Add Role',
       'Update Employee Role',
-      'Update Employee Manager',
-      'View Employees by Manager'
+      'Update Employee Manager'
     ],
     name: 'type',
   })
