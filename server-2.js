@@ -65,9 +65,29 @@ ON employee.manager_id = manager.id
     init();
 };
 
-
 // 
-
+const addRole = async () => {
+    const [departments] = await selectAllValue('department', 'name', 'id');
+    prompt([
+        {
+            name: 'title',
+            message: 'What is the name of the role?'
+        },
+        {
+            name: 'salary',
+            message: 'What is the salary for this role?'
+        },
+        {
+            type: 'rawlist',
+            name: 'department_id',
+            message: 'What department does this role belong to?',
+            choices: departments
+        }
+    ])
+    .then((answers) => {
+        insert('role', answers);
+    })
+}
 
 const addEmployee = async () => {
   const [roles] = await selectAllValue('role', 'title', 'id');
@@ -98,7 +118,28 @@ const addEmployee = async () => {
     insert('employee', answers);
   });
 };
-
+const updateRole = async () => {
+    const [roles] = await selectAllValue('role', 'title', 'id');
+    const [employees] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
+    prompt([
+        {
+            type: 'rawlist',
+            name: 'id',
+            message: 'Which employee\'s role are you updating?',
+            choices: employees
+        },
+        {
+            type: 'rawlist',
+            name: 'role_id',
+            message: 'What is this employee\'s new role?',
+            choices: roles
+        }
+    ])
+    .then((answers) => {
+        const roleId = {role_id: answers.role_id};
+        update('employee', roleId, answers.id);
+    })
+}
 // 
 
 const chooseOption = (type) => {
@@ -120,8 +161,12 @@ const chooseOption = (type) => {
       break;
     }
     case 'Add Role': {
-    addRole();
-    break;
+        addRole();
+        break;
+    }
+    case 'Update Employee Role': {
+        updateRole();
+        break;
     }
   }
 };
@@ -135,7 +180,8 @@ const init = () => {
       'View All Departments',
       'View All Roles',
       'Add Employee',
-      'Add Role'
+      'Add Role',
+      'Update Employee Role',
     ],
     name: 'type',
   })
