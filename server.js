@@ -10,7 +10,7 @@ const db = mysql.createConnection({
 });
 
 
-// Performs SQL query SELECT * FROM for the table being passed by chooseOption function below
+// Performs SQL query SELECT * FROM for the table being passed by chooseOption() function below
 const selectAll = async (table, display) => {
   const results = await db.promise().query('SELECT * FROM ' + table);
   if (display) {
@@ -20,7 +20,7 @@ const selectAll = async (table, display) => {
   return results;
 };
 
-// Performs SQL query to insert data provided by addRole & addEmployee functions
+// Performs SQL query to insert data provided by addRole() & addEmployee() functions
 const insert = (table, data) => {
   db.query('INSERT INTO ?? SET ?', [table, data], (err) => {
     if (err) return console.error(err);
@@ -73,7 +73,7 @@ const selectAllEmployeeDetails = async () => {
     init();
 };
 
-// send answers to insert function to add a role to the database
+// send answers to insert() function to add a role to the database
 const addRole = async () => {
     const [departments] = await selectAllValue('department', 'name', 'id');
     prompt([
@@ -97,7 +97,7 @@ const addRole = async () => {
     })
 }
 
-// Send answers to insert function to add an employee to database
+// Send answers to insert() function to add an employee to database
 const addEmployee = async () => {
   const [roles] = await selectAllValue('role', 'title', 'id');
   const [managers] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
@@ -128,7 +128,7 @@ const addEmployee = async () => {
   });
 };
 
-// Send answers to update function to update role
+// Send answers to update() function to update role
 const updateRole = async () => {
     const [roles] = await selectAllValue('role', 'title', 'id');
     const [employees] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
@@ -152,7 +152,7 @@ const updateRole = async () => {
     })
 }
 
-// Send answers to update function to update manager
+// Send answers to update() function to update manager
 const updateManager = async () => {
     const [managers] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
     const [employees] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
