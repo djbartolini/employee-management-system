@@ -1,13 +1,16 @@
 const inquirer = require('inquirer');
 const prompt = inquirer.createPromptModule();
-const mysql = require('mysql2');
+
 require('console.table');
 
+const mysql = require('mysql2');
 const db = mysql.createConnection({
   user: "root",
   database: "employee_db",
 });
 
+
+// Performs SQL query SELECT * FROM for the table being passed by chooseOption function below
 const selectAll = async (table, display) => {
   const results = await db.promise().query('SELECT * FROM ' + table);
   if (display) {
@@ -17,6 +20,7 @@ const selectAll = async (table, display) => {
   return results;
 };
 
+// Performs SQL query to insert data provided by addRole & addEmployee functions
 const insert = (table, data) => {
   db.query('INSERT INTO ?? SET ?', [table, data], (err) => {
     if (err) return console.error(err);
@@ -25,6 +29,7 @@ const insert = (table, data) => {
   });
 };
 
+// Performs SQL query to update database with the provided parameters
 const update = (table, roleId, employeeId) => {
     db.query('UPDATE ?? SET ? WHERE employee.id = ?', [table, roleId, employeeId], (err) => {
         if (err) return console.error(err);
@@ -33,14 +38,17 @@ const update = (table, roleId, employeeId) => {
     });
 }
 
+// Select all names and ids as object from database (to be used for inquirer choices)
 const selectAllNameAndValue = (table, firstName, lastName, value) => {
   return db.promise().query('SELECT CONCAT(??, " ", ??) AS name, ?? AS value FROM ??', [firstName, lastName, value, table]);
 };
 
+// Select department or roles with ids as object from database (to be used for inquirer choices)
 const selectAllValue = (table, name, value) => {
   return db.promise().query('SELECT ?? AS name, ?? AS value FROM ??', [name, value, table]);
 }
 
+// Prints a table of all employees to the terminal
 const selectAllEmployeeDetails = async () => {
   const statement = `
     SELECT
@@ -65,6 +73,7 @@ const selectAllEmployeeDetails = async () => {
     init();
 };
 
+// send answers to insert function to add a role to the database
 const addRole = async () => {
     const [departments] = await selectAllValue('department', 'name', 'id');
     prompt([
@@ -88,6 +97,7 @@ const addRole = async () => {
     })
 }
 
+// Send answers to insert function to add an employee to database
 const addEmployee = async () => {
   const [roles] = await selectAllValue('role', 'title', 'id');
   const [managers] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
@@ -117,6 +127,8 @@ const addEmployee = async () => {
     insert('employee', answers);
   });
 };
+
+// Send answers to update function to update role
 const updateRole = async () => {
     const [roles] = await selectAllValue('role', 'title', 'id');
     const [employees] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
@@ -140,6 +152,7 @@ const updateRole = async () => {
     })
 }
 
+// Send answers to update function to update manager
 const updateManager = async () => {
     const [managers] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
     const [employees] = await selectAllNameAndValue('employee', 'first_name', 'last_name', 'id');
@@ -163,6 +176,7 @@ const updateManager = async () => {
     })
 }
 
+// Switch case for the possible cases provided below
 const chooseOption = (type) => {
   switch (type) {
     case 'View All Employees': {
@@ -182,23 +196,24 @@ const chooseOption = (type) => {
       break;
     }
     case 'Add Role': {
-        addRole();
-        break;
+      addRole();
+      break;
     }
     case 'Update Employee Role': {
-        updateRole();
-        break;
+      updateRole();
+      break;
     }
     case 'Update Employee Manager': {
-        updateManager();
-        break;
+      updateManager();
+      break;
     }
     case 'Done': {
-        process.exit();
+      process.exit();
     }
   }
 };
 
+// Initial prompt that can be repeated indefinitely or exited via 'Done'
 const init = () => {
   prompt({
     type: 'rawlist',
